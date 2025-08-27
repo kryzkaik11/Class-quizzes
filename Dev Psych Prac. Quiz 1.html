@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Psych 201 • Dev Psych Reviewer</title>
+<style>
+  :root{
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --text:#0b1220;
+    --muted:#56627a;
+    --brand:#1f56ff;
+    --brand-2:#1a45d8;
+    --border:#e6eaf2;
+    --pill:#eef3ff;
+    --accent:#10b981;
+    --warn:#f59e0b;
+    --danger:#ef4444;
+    --radius:16px;
+    --shadow:0 8px 20px rgba(15,23,42,0.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: "Inter", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, "Apple Color Emoji", "Segoe UI Emoji";
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .app{ max-width:720px; margin:0 auto; padding:16px 16px 88px }
+
+  /* Top */
+  .top{ position:sticky; top:0; z-index:10; background:rgba(248,250,252,0.95); border-bottom:1px solid var(--border); backdrop-filter:blur(8px) }
+  .brand{ display:flex; align-items:center; gap:12px; padding:12px 16px }
+  .logo{ width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--brand),#16c784); display:grid; place-items:center; color:#fff; font-weight:900; font-size:20px; box-shadow:var(--shadow) }
+  .title{ font-weight:900 }
+  .search{ padding:6px 16px 12px }
+  .search input{
+    width:100%; font-size:16px; padding:12px 14px; border:1px solid var(--border); border-radius:999px; background:#fff; outline:none; color:var(--text); font-weight:700;
+  }
+  .pillbar{ display:flex; gap:8px; overflow-x:auto; padding:8px 16px 12px; -webkit-overflow-scrolling:touch }
+  .pill{
+    flex:0 0 auto; padding:9px 14px; font-size:14px; font-weight:800; border-radius:999px; border:1px solid var(--border);
+    background:#fff; color:var(--muted); cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  .pill.active{ background:var(--pill); color:var(--brand); border-color:#d8e2ff }
+
+  /* Cards */
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin:12px 0 }
+  .card-header{ padding:16px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid var(--border) }
+  .card-title{ font-weight:900 }
+  .seg{ display:inline-flex; background:#f3f6fb; border:1px solid var(--border); border-radius:999px; overflow:hidden }
+  .seg button{ border:none; background:transparent; padding:9px 16px; font-weight:800; color:var(--muted); cursor:pointer }
+  .seg button.active{ background:#fff; color:var(--brand) }
+  .card-body{ padding:16px }
+
+  /* Flashcards */
+  .flash-wrap{ perspective:1200px }
+  .flash{
+    position:relative; height:240px; border-radius:14px; background:linear-gradient(180deg,#ffffff,#f6f9ff); border:1px solid var(--border);
+    transform-style:preserve-3d; transition: transform .45s ease;
+    display:grid; place-items:center; padding:18px;
+  }
+  .flash.flipped{ transform:rotateY(180deg) }
+  .face{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:16px; backface-visibility:hidden; text-align:center; line-height:1.55 }
+  .front{ font-weight:900 }
+  .back{ transform:rotateY(180deg); color:#0b1b4a; font-weight:700 }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px }
+  .btn{
+    flex:1; min-width:110px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:#fff; color:var(--text);
+    font-weight:900; cursor:pointer;
+  }
+  .btn.primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border-color:transparent }
+  .btn.good{ background:linear-gradient(135deg,#34d399,#10b981); color:#053626; border-color:transparent }
+  .btn.warn{ background:linear-gradient(135deg,#fde68a,#f59e0b); color:#7a4a00; border-color:transparent }
+  .btn.ghost{ background:#f7f9fc }
+  .meta{ margin-top:8px; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap }
+
+  /* Quiz */
+  .q-stem{ font-weight:900; margin-bottom:12px }
+  .choices{ display:flex; flex-direction:column; gap:10px }
+  .choice{ padding:12px; border-radius:12px; border:1px solid var(--border); background:#fff; font-weight:700; cursor:pointer }
+  .choice.selected{ border-color:#cfe0ff; background:#f6f9ff }
+  .choice.correct{ border-color:#22c55e; background:#ecfdf5 }
+  .choice.wrong{ border-color:#ef4444; background:#fff1f2 }
+  .note{ color:var(--muted); margin-top:8px; min-height:22px; font-weight:700 }
+
+  /* Progress */
+  .progress{ display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px }
+  .meter{ flex:1; height:10px; background:#f4f6fb; border:1px solid var(--border); border-radius:999px; overflow:hidden }
+  .meter > span{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--brand),#34d399); transition:width .4s ease }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <div class="logo">Ψ</div>
+      <div class="title">Psych 201: Developmental Psychology</div>
+    </div>
+    <div class="search">
+      <input id="search" placeholder="Search (e.g., Piaget, ZPD, longitudinal)" inputmode="search" />
+    </div>
+    <div class="pillbar" id="pillbar"></div>
+  </div>
+
+  <div class="app">
+    <!-- Mode -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Study</div>
+        <div class="seg">
+          <button id="mode-flash" class="active">Flashcards</button>
+          <button id="mode-quiz">Quiz</button>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- Flashcards -->
+        <section id="flash-mode">
+          <div class="flash-wrap">
+            <div class="flash" id="flashcard" tabindex="0" aria-live="polite">
+              <div class="face front" id="fc-front"></div>
+              <div class="face back" id="fc-back"></div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="fc-prev">Prev</button>
+            <button class="btn primary" id="fc-flip">Flip</button>
+            <button class="btn ghost" id="fc-next">Next</button>
+          </div>
+          <div class="row">
+            <button class="btn warn" id="fc-again">Again</button>
+            <button class="btn good" id="fc-good">Good</button>
+          </div>
+          <div class="meta">
+            <div id="fc-count">0/0</div>
+            <div id="fc-tag">Topic: —</div>
+          </div>
+        </section>
+
+        <!-- Quiz -->
+        <section id="quiz-mode" style="display:none">
+          <div class="q-stem" id="q-stem"></div>
+          <div class="choices" id="q-choices"></div>
+          <div class="row">
+            <button class="btn primary" id="q-check">Check</button>
+            <button class="btn ghost" id="q-next">Next</button>
+          </div>
+          <div class="note" id="q-note"></div>
+          <div class="meta">
+            <div id="q-type">—</div>
+            <div id="q-progress">0/0</div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Progress</div></div>
+      <div class="card-body">
+        <div class="progress">
+          <div>Mastery</div>
+          <div class="meter"><span id="meter"></span></div>
+          <div id="meter-text">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ========= Data ========= */
+const topics = [
+  "Intro","Lifespan Perspective","Debates","Research Methods","Research Designs","Ethics",
+  "Psychoanalytic","Cognitive (Piaget)","Sociocultural (Vygotsky)","Behaviorism",
+  "Social Cognitive (Bandura)","Ecological (Bronfenbrenner)","Ethology/Attachment","Moral Development","Parenting Styles"
+];
+
+const flashcards = [
+  {t:"What is Developmental Psychology?", a:"Scientific study of human growth and change across cognitive, emotional, social, and physical domains throughout the lifespan.", tag:"Intro"},
+  {t:"Why is development important for psychology majors?", a:"It provides context for behavior: establishes norms, identifies difficulties, clarifies nature–nurture influences, and frames behavior across the lifespan.", tag:"Intro"},
+  {t:"Lifespan Perspective: Lifelong", a:"Change occurs from conception to death; no age period is supreme.", tag:"Lifespan Perspective"},
+  {t:"Lifespan Perspective: Multidimensional", a:"Biological, cognitive, and socioemotional dimensions interact.", tag:"Lifespan Perspective"},
+  {t:"Lifespan Perspective: Multidirectional", a:"Some abilities improve while others decline at different times.", tag:"Lifespan Perspective"},
+  {t:"Lifespan Perspective: Plastic", a:"Capacity for change at any age, within limits.", tag:"Lifespan Perspective"},
+  {t:"Lifespan Perspective: Contextual", a:"Normative age-graded, history-graded (cohort), and non-normative influences shape development.", tag:"Lifespan Perspective"},
+  {t:"Nature vs. Nurture", a:"Modern view: they interact dynamically across development.", tag:"Debates"},
+  {t:"Continuity vs. Discontinuity", a:"Gradual cumulative change vs. stage-like qualitative shifts.", tag:"Debates"},
+  {t:"Stability vs. Change", a:"Do early traits persist or do people change substantially?", tag:"Debates"},
+  {t:"Naturalistic observation", a:"Observe behavior in real-world settings without manipulation.", tag:"Research Methods"},
+  {t:"Survey/Interview", a:"Collect information through questionnaires or direct questioning.", tag:"Research Methods"},
+  {t:"Case study", a:"In-depth study of an individual or small group.", tag:"Research Methods"},
+  {t:"Longitudinal design", a:"Study the same individuals over time; tracks change; risk of attrition.", tag:"Research Designs"},
+  {t:"Cross-sectional design", a:"Compare different ages at one time; fast; cohort effects possible.", tag:"Research Designs"},
+  {t:"Sequential design", a:"Combines longitudinal and cross-sectional approaches.", tag:"Research Designs"},
+  {t:"Ethics: Informed consent", a:"Participants or guardians agree with understanding of procedures and risks.", tag:"Ethics"},
+  {t:"Ethics: Confidentiality", a:"Data kept private/anonymous.", tag:"Ethics"},
+  {t:"Ethics: Debriefing & Deception", a:"Deception must be justified, harmless, and followed by debriefing.", tag:"Ethics"},
+  {t:"Freud: Psychosexual stages", a:"Oral, Anal, Phallic, Latency, Genital; fixation leads to later issues.", tag:"Psychoanalytic"},
+  {t:"Erikson: Psychosocial stages", a:"Trust–Mistrust; Autonomy–Shame; Initiative–Guilt; Industry–Inferiority; Identity–Role Confusion; Intimacy–Isolation; Generativity–Stagnation; Integrity–Despair.", tag:"Psychoanalytic"},
+  {t:"Piaget: Schema", a:"Mental framework organizing knowledge.", tag:"Cognitive (Piaget)"},
+  {t:"Piaget: Assimilation vs Accommodation", a:"Assimilation: fit info into existing schemas; Accommodation: alter schemas.", tag:"Cognitive (Piaget)"},
+  {t:"Piaget stages", a:"Sensorimotor (object permanence); Preoperational (egocentrism, symbols); Concrete operational (conservation); Formal operational (abstract).", tag:"Cognitive (Piaget)"},
+  {t:"Vygotsky: ZPD", a:"Gap between what a learner can do alone and with guidance.", tag:"Sociocultural (Vygotsky)"},
+  {t:"Vygotsky: Scaffolding", a:"Temporary support to help mastery within the ZPD.", tag:"Sociocultural (Vygotsky)"},
+  {t:"Behaviorism", a:"Focus on observable behavior; learning via conditioning.", tag:"Behaviorism"},
+  {t:"Classical vs Operant conditioning", a:"Classical: association; Operant: consequences (reinforcement/punishment).", tag:"Behaviorism"},
+  {t:"Bandura: Social cognitive", a:"Learning by observing (modeling); importance of self-efficacy.", tag:"Social Cognitive (Bandura)"},
+  {t:"Bronfenbrenner systems", a:"Microsystem, Mesosystem, Exosystem, Macrosystem, Chronosystem.", tag:"Ecological (Bronfenbrenner)"},
+  {t:"Ethology: Critical/sensitive periods", a:"Biological timing windows for learning.", tag:"Ethology/Attachment"},
+  {t:"Lorenz: Imprinting", a:"Attachment to first moving object during a critical period.", tag:"Ethology/Attachment"},
+  {t:"Bowlby: Attachment", a:"Innate system; early caregiver bond shapes later relationships.", tag:"Ethology/Attachment"},
+  {t:"Ainsworth: Strange Situation", a:"Secure, Insecure-Avoidant, Insecure-Resistant, Disorganized.", tag:"Ethology/Attachment"},
+  {t:"Kohlberg: Moral levels", a:"Preconventional, Conventional, Postconventional; focus on reasoning.", tag:"Moral Development"},
+  {t:"Gilligan: Ethics of care", a:"Critique of Kohlberg; emphasizes care/responsibility in relationships.", tag:"Moral Development"},
+  {t:"Parenting styles", a:"Authoritative (best): high control/high warmth; Authoritarian: high control/low warmth; Permissive: low control/high warmth; Uninvolved: low/low.", tag:"Parenting Styles"},
+];
+
+const quizBank = [
+  {type:"mc", stem:"Which best captures the modern view of nature vs. nurture?", choices:[
+    "Only genetics matters","Only environment matters","They interact dynamically","They only influence early childhood"
+  ], answer:2, expl:"Consensus: interaction, not either/or.", tag:"Debates"},
+  {type:"mc", stem:"Comparing 6-, 8-, and 10-year-olds at one time is:", choices:[
+    "Longitudinal","Cross-sectional","Sequential","Case study"
+  ], answer:1, expl:"Different ages at one time = cross-sectional.", tag:"Research Designs"},
+  {type:"mc", stem:"In Piaget's theory, object permanence appears in:", choices:[
+    "Preoperational","Formal operational","Sensorimotor","Concrete operational"
+  ], answer:2, expl:"Sensorimotor stage.", tag:"Cognitive (Piaget)"},
+  {type:"mc", stem:"Which parenting style is linked to best outcomes?", choices:[
+    "Authoritarian","Authoritative","Permissive","Uninvolved"
+  ], answer:1, expl:"Authoritative balances warmth and control.", tag:"Parenting Styles"},
+  {type:"mc", stem:"Bronfenbrenner level with culture and laws:", choices:[
+    "Microsystem","Mesosystem","Exosystem","Macrosystem"
+  ], answer:3, expl:"Macrosystem = broader culture.", tag:"Ecological (Bronfenbrenner)"},
+  {type:"tf", stem:"Reinforcement decreases likelihood of a behavior.", answer:false, expl:"Reinforcement increases likelihood; punishment decreases.", tag:"Behaviorism"},
+  {type:"tf", stem:"Longitudinal studies avoid attrition problems.", answer:false, expl:"They are vulnerable to attrition.", tag:"Research Designs"},
+  {type:"tf", stem:"Erikson: identity vs. role confusion = adolescence.", answer:true, expl:"Core task of adolescence.", tag:"Psychoanalytic"},
+  {type:"tf", stem:"Lorenz’s imprinting supports an innate basis for attachment.", answer:true, expl:"Occurs during a critical period.", tag:"Ethology/Attachment"},
+];
+
+/* ========= State ========= */
+const state = {
+  selectedTopics: new Set(topics),
+  search: "",
+  // Flashcards
+  fcFiltered: [],
+  fcIndex: 0,
+  flipped: false,
+  mastery: Array(flashcards.length).fill(0),
+  // Quiz
+  quizFiltered: [],
+  quizSet: [],
+  qi: 0,
+  selected: null,
+  answered: false,
+};
+
+/* ========= Elements ========= */
+const pillbar = document.getElementById('pillbar');
+const searchInput = document.getElementById('search');
+
+const modeFlashBtn = document.getElementById('mode-flash');
+const modeQuizBtn = document.getElementById('mode-quiz');
+const flashSection = document.getElementById('flash-mode');
+const quizSection = document.getElementById('quiz-mode');
+
+const flashEl = document.getElementById('flashcard');
+const fcFront = document.getElementById('fc-front');
+const fcBack = document.getElementById('fc-back');
+const fcPrev = document.getElementById('fc-prev');
+const fcNext = document.getElementById('fc-next');
+const fcFlip = document.getElementById('fc-flip');
+const fcAgain = document.getElementById('fc-again');
+const fcGood = document.getElementById('fc-good');
+const fcCount = document.getElementById('fc-count');
+const fcTag = document.getElementById('fc-tag');
+
+const qStem = document.getElementById('q-stem');
+const qChoices = document.getElementById('q-choices');
+const qCheck = document.getElementById('q-check');
+const qNext = document.getElementById('q-next');
+const qNote = document.getElementById('q-note');
+const qType = document.getElementById('q-type');
+const qProgress = document.getElementById('q-progress');
+
+const meter = document.getElementById('meter');
+const meterText = document.getElementById('meter-text');
+
+/* ========= Init ========= */
+document.addEventListener('DOMContentLoaded', () => {
+  // Load mastery from localStorage if available
+  try {
+    const saved = JSON.parse(localStorage.getItem('psych201_simple_mastery') || '{}');
+    if (Array.isArray(saved.mastery) && saved.mastery.length === flashcards.length) {
+      state.mastery = saved.mastery.slice();
+    }
+  } catch {}
+
+  renderPills();
+  bindEvents();
+  applyFilters();
+  setMode('flash');
+});
+
+/* ========= Pills ========= */
+function renderPills(){
+  pillbar.innerHTML = '';
+  topics.forEach(t=>{
+    const b = document.createElement('button');
+    b.className = 'pill active';
+    b.textContent = t;
+    b.addEventListener('click', ()=>{
+      if(state.selectedTopics.has(t)){ state.selectedTopics.delete(t); b.classList.remove('active'); }
+      else { state.selectedTopics.add(t); b.classList.add('active'); }
+      applyFilters();
+    });
+    pillbar.appendChild(b);
+  });
+}
+
+/* ========= Filters ========= */
+function applyFilters(){
+  const q = state.search.trim().toLowerCase();
+  const inTopics = tag => state.selectedTopics.has(tag);
+
+  state.fcFiltered = flashcards.filter(c =>
+    inTopics(c.tag) &&
+    (!q || c.t.toLowerCase().includes(q) || c.a.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q))
+  );
+
+  state.quizFiltered = quizBank.filter(it =>
+    inTopics(it.tag) &&
+    (!q || it.stem.toLowerCase().includes(q) || it.tag.toLowerCase().includes(q) ||
+      (it.choices ? it.choices.some(c=>c.toLowerCase().includes(q)) : false))
+  );
+
+  if(state.fcIndex >= state.fcFiltered.length) state.fcIndex = 0;
+  state.flipped = false;
+  renderFlashcard();
+
+  buildQuizSet();
+  updateProgress();
+}
+
+/* ========= Flashcards ========= */
+function renderFlashcard(){
+  const len = state.fcFiltered.length;
+  if(!len){
+    fcFront.textContent = "No cards match your filters.";
+    fcBack.textContent = "Adjust topic pills or search.";
+    flashEl.classList.toggle('flipped', state.flipped);
+    fcCount.textContent = "0/0";
+    fcTag.textContent = "Topic: —";
+    return;
+  }
+  const card = state.fcFiltered[state.fcIndex];
+  fcFront.textContent = card.t;
+  fcBack.textContent = card.a;
+  flashEl.classList.toggle('flipped', state.flipped);
+  fcCount.textContent = `${state.fcIndex+1}/${len}`;
+  fcTag.textContent = `Topic: ${card.tag}`;
+}
+function fcFlipCard(){ state.flipped = !state.flipped; flashEl.classList.toggle('flipped', state.flipped); }
+function fcNextCard(){ if(!state.fcFiltered.length) return; state.fcIndex = (state.fcIndex+1) % state.fcFiltered.length; state.flipped=false; renderFlashcard(); }
+function fcPrevCard(){ if(!state.fcFiltered.length) return; state.fcIndex = (state.fcIndex-1+state.fcFiltered.length) % state.fcFiltered.length; state.flipped=false; renderFlashcard(); }
+function fcRate(level){
+  if(!state.fcFiltered.length) return;
+  const current = state.fcFiltered[state.fcIndex];
+  const idx = flashcards.findIndex(x=> x.t===current.t && x.a===current.a && x.tag===current.tag);
+  if(idx<0) return;
+  state.mastery[idx] = (level==='good') ? 1 : 0;
+  saveMastery();
+  updateProgress();
+  fcNextCard();
+}
+
+/* ========= Quiz ========= */
+function buildQuizSet(){
+  state.quizSet = state.quizFiltered.slice(); // copy
+  shuffle(state.quizSet);
+  state.qi = 0;
+  state.selected = null;
+  state.answered = false;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  qChoices.innerHTML = "";
+  qNote.textContent = "";
+
+  if(!state.quizSet.length){
+    qStem.textContent = "No quiz items match your filters.";
+    qType.textContent = "—";
+    qProgress.textContent = "0/0";
+    return;
+  }
+
+  const item = state.quizSet[state.qi];
+  qStem.textContent = item.stem;
+  qType.textContent = item.type === 'mc' ? "Multiple Choice" : "True/False";
+
+  if(item.type === 'mc'){
+    item.choices.forEach((choice, i)=>{
+      const div = document.createElement('div');
+      div.className = 'choice';
+      div.textContent = `${i+1}. ${choice}`;
+      div.addEventListener('click', ()=> selectChoice(i));
+      qChoices.appendChild(div);
+    });
+  } else {
+    ['True','False'].forEach((label, i)=>{
+      const div = document.createElement('div');
+      div.className = 'choice';
+      div.textContent = `${i+1}. ${label}`;
+      div.addEventListener('click', ()=> selectChoice(i===0));
+      qChoices.appendChild(div);
+    });
+  }
+
+  state.selected = null;
+  state.answered = false;
+  qProgress.textContent = `${state.qi+1}/${state.quizSet.length}`;
+}
+
+function selectChoice(val){
+  if(state.answered) return;
+  state.selected = val;
+  [...qChoices.children].forEach((el,i)=>{
+    el.classList.remove('selected');
+    if(typeof val === 'number'){ if(i===val) el.classList.add('selected'); }
+    else { if((i===0 && val===true) || (i===1 && val===false)) el.classList.add('selected'); }
+  });
+}
+
+function checkAnswer(){
+  if(!state.quizSet.length) return;
+  if(state.selected===null){ qNote.textContent = "Pick an answer first."; return; }
+
+  const item = state.quizSet[state.qi];
+  state.answered = true;
+
+  let correct = false;
+  if(item.type==='mc'){
+    [...qChoices.children].forEach((el,i)=>{
+      if(i===item.answer) el.classList.add('correct');
+      if(i===state.selected && i!==item.answer) el.classList.add('wrong');
+      el.style.pointerEvents = 'none';
+    });
+    correct = (state.selected===item.answer);
+  } else {
+    const ans = !!item.answer;
+    [...qChoices.children].forEach((el,i)=>{
+      const val = (i===0);
+      if(val===ans) el.classList.add('correct');
+      if(val===state.selected && val!==ans) el.classList.add('wrong');
+      el.style.pointerEvents = 'none';
+    });
+    correct = (state.selected===ans);
+  }
+
+  qNote.textContent = (correct ? "Correct. " : "Not quite. ") + (item.expl || "");
+
+  // Tiny mastery nudge: flip one card in the same tag
+  const candidates = flashcards.map((c,idx)=> ({...c, idx})).filter(c=> c.tag===item.tag);
+  if(candidates.length){
+    const pick = candidates[Math.floor(Math.random()*candidates.length)].idx;
+    state.mastery[pick] = correct ? 1 : 0;
+    saveMastery();
+    updateProgress();
+  }
+}
+
+function nextQuestion(){
+  if(!state.quizSet.length) return;
+  state.qi = (state.qi + 1) % state.quizSet.length;
+  renderQuestion();
+}
+
+/* ========= Progress ========= */
+function updateProgress(){
+  const total = state.mastery.length || 1;
+  const mastered = state.mastery.reduce((a,b)=> a + (b ? 1 : 0), 0);
+  const pct = Math.round((mastered/total)*100);
+  meter.style.width = pct + '%';
+  meterText.textContent = pct + '%';
+}
+function saveMastery(){
+  try {
+    localStorage.setItem('psych201_simple_mastery', JSON.stringify({mastery: state.mastery}));
+  } catch {}
+}
+
+/* ========= Helpers ========= */
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+
+/* ========= Events ========= */
+function bindEvents(){
+  searchInput.addEventListener('input', (e)=>{ state.search = e.target.value; applyFilters(); });
+
+  // Mode
+  modeFlashBtn.addEventListener('click', ()=> setMode('flash'));
+  modeQuizBtn.addEventListener('click', ()=> setMode('quiz'));
+
+  // Flashcards
+  fcFlip.addEventListener('click', fcFlipCard);
+  flashEl.addEventListener('click', fcFlipCard);
+  fcNext.addEventListener('click', fcNextCard);
+  fcPrev.addEventListener('click', fcPrevCard);
+  fcAgain.addEventListener('click', ()=> fcRate('again'));
+  fcGood.addEventListener('click', ()=> fcRate('good'));
+
+  // Quiz
+  qCheck.addEventListener('click', checkAnswer);
+  qNext.addEventListener('click', nextQuestion);
+
+  // Keyboard (optional desktop)
+  document.addEventListener('keydown', (e)=>{
+    const tag = document.activeElement?.tagName?.toLowerCase();
+    if(tag==='input' || tag==='textarea') return;
+    const k = e.key.toLowerCase();
+    if(k==='f') fcFlipCard();
+    if(k==='arrowright' || k==='n') fcNextCard();
+    if(k==='arrowleft' || k==='p') fcPrevCard();
+    if(k==='enter') checkAnswer();
+    if(k===' ') { e.preventDefault(); fcFlipCard(); }
+  }, {passive:false});
+}
+
+function setMode(m){
+  if(m==='flash'){
+    modeFlashBtn.classList.add('active');
+    modeQuizBtn.classList.remove('active');
+    flashSection.style.display='block';
+    quizSection.style.display='none';
+  } else {
+    modeQuizBtn.classList.add('active');
+    modeFlashBtn.classList.remove('active');
+    flashSection.style.display='none';
+    quizSection.style.display='block';
+  }
+}
+</script>
+</body>
+</html>
